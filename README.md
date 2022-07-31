@@ -8,7 +8,7 @@
 
 <img width="786" alt="image" src="https://user-images.githubusercontent.com/66009926/182016542-81bdf6b3-0636-4051-84b7-2e2462b0ff14.png">
 
-## 프로그램 실행 순서
+## 프로그램 Action
 
 ### 1. Kream으로부터 상품 상세 페이지 url을 가져옵니다.
 
