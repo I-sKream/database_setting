@@ -22,7 +22,7 @@ def insert_price_database():
             price_count = random.randint(100, 200)
 
             sizes = [230,235,240,245,250,255,260,265,270,275,280,285,290]
-            weight = random.randint(1000000, 1000000)
+            weight = random.randint(100000, 1000000)
 
             for i in  range(price_count):
 
