@@ -3,13 +3,8 @@ import random
 import tqdm
 
 from model.models import Order, Price, User
+import service.insert_price_database as insert_price_database
 from tools.SqlAlchemyContextManager import SqlAlchemyContextManager
-
-
-def get_random_user(session):
-    rand_user = random.randrange(0, session.query(User).count())
-    buyer = session.query(User)[rand_user]
-    return buyer
 
 
 def get_ramdom_date():
@@ -27,8 +22,9 @@ def insert_order_database() :
 
         for price in tqdm(prices):
             rand = random.randint(1, 10)
+            
             if rand != 5:
-                buyer = get_random_user(session)
+                buyer = insert_price_database.get_random_user(session)
                 date = get_ramdom_date()
 
                 order = Order()

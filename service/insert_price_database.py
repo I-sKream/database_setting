@@ -2,15 +2,16 @@ from tqdm import tqdm
 import random
 
 from model.models import Price, User, Product
+import service.insert_user_database as insert_user_database
 from tools.SqlAlchemyContextManager import SqlAlchemyContextManager
 
 
-"""
-가격대 : 가중치 * 100000 ~ 300000, 가중치는 1 ~ 9까지
-판매자 : 우선 admin
-사이즈 : 230 ~ 290까지 랜덤
-상품 개수 : 100 ~ 200 
-"""
+def get_random_user(session):
+    rand_user = random.randrange(0, session.query(User).count())
+    user = session.query(User)[rand_user]
+    return user
+
+
 def insert_price_database():
 
     with SqlAlchemyContextManager() as session:
@@ -25,9 +26,8 @@ def insert_price_database():
             weight = random.randint(100000, 1000000)
 
             for i in  range(price_count):
-
-                rand = random.randrange(0, session.query(User).count())
-                seller = session.query(User)[rand]
+                
+                seller = get_random_user(session)
 
                 size = random.choice(sizes)
                 _price = random.randrange(1 * weight, 5 * weight, 10000)
