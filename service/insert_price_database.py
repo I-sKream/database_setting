@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import random
 
 from model.models import Price, User, Product
@@ -14,31 +15,33 @@ def insert_price_database():
 
     with SqlAlchemyContextManager() as session:
 
-        admin_user = session.query(User).filter_by(id = "admin").first()
-
         products = session.query(Product).all()
 
-        for product in products:
+        for product in tqdm(products):
 
             price_count = random.randint(100, 200)
 
             sizes = [230,235,240,245,250,255,260,265,270,275,280,285,290]
-            weight = random.randint(1, 9)
+            weight = random.randint(1000000, 1000000)
 
             for i in  range(price_count):
+
+                rand = random.randrange(0, session.query(User).count())
+                seller = session.query(User)[rand]
+
                 size = random.choice(sizes)
-                _price = random.randrange(100000 * weight, 300000 * weight, 10000)
+                _price = random.randrange(1 * weight, 5 * weight, 10000)
 
                 price = Price()
 
                 price.price = _price
                 price.product = product
-                price.seller = admin_user
+                price.seller = seller
                 price.size = size
 
                 session.add(price)
 
-        session.commit()
+            session.commit()
 
 
 def run():

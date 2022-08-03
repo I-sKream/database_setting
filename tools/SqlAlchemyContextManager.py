@@ -14,7 +14,7 @@ class SqlAlchemyContextManager:
     """
     def __init__(self):
 
-        engine = create_engine(DATABASE_PATH, echo=True, future=True)
+        engine = create_engine(DATABASE_PATH, echo=False, future=True)
 
         Session = sessionmaker(engine)
         self.session = Session()

@@ -1,4 +1,5 @@
 from selenium.webdriver.common.by import By
+from tqdm import tqdm
 
 from tools.SeleniumContextManager import SeleniumContextManager
 
@@ -56,11 +57,11 @@ def run(products_url_path:str, product_data_path:str):
     url_list = read_product_url_data_from_local(products_url_path)
 
     data_list = []
-    for i, url in enumerate(url_list):
-        print(f"========== {i} steps ==========")
+    for url in tqdm(url_list):
         brand, name_eng, name_kor, img_urls = get_product_data(url)
         urls = " ".join(img_urls)
-        data_list.append(brand + "---" + name_eng + "---" + name_kor + "---" + urls)
+        if(brand and name_eng and name_kor and urls):
+            data_list.append(brand + "---" + name_eng + "---" + name_kor + "---" + urls)
     
     save_product_data_in_local(product_data_path, data_list)
 

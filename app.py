@@ -1,7 +1,9 @@
 import service.get_product_data as get_product_data
 import service.get_products_url_data as get_products_url_data
+import service.insert_order_database as insert_order_database
 import service.insert_product_thumbnail_database as insert_product_thumbnail_database
 import service.insert_price_database as insert_price_database
+import service.insert_user_database as insert_user_database
 
 
 PRODUCT_LINKS_FILE_PATH = "resource/products_link_list.txt"
@@ -19,8 +21,14 @@ def main():
     print("====== Step 3. Save Product Data In Database! ======")
     insert_product_thumbnail_database.run(PRODUCT_DATA_FILE_PATH)
 
-    print("====== Step 4. Make Dummy Price Data In Database! ======")
+    print("====== Step 4. Make Dummy User Data In Database! ======")
+    insert_user_database.run()
+
+    print("====== Step 5. Make Dummy Price Data In Database! ======")
     insert_price_database.run()
+
+    print("====== Step 6. Make Dummy Order Data In Database! ======")
+    insert_order_database.run()
 
 
 if __name__ == "__main__":

@@ -17,7 +17,7 @@ def get_products_url_data():
 
     with SeleniumContextManager() as driver:
 
-        driver.get("https://kream.co.kr/search")
+        driver.get("https://kream.co.kr/search?category_id=34&sort=popular&per_page=40")
 
         driver.implicitly_wait(5)
 

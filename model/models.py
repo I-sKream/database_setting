@@ -12,7 +12,8 @@ class Product(Base):
 
     id = Column(BigInteger, primary_key=True)
     brand = Column(String(255), nullable=False)
-    name = Column(String(255), nullable=False)
+    name_eng = Column(String(255), nullable=False)
+    name_kor = Column(String(255), nullable=False)
 
 
 class User(Base):
