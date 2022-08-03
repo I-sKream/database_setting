@@ -1,4 +1,4 @@
-# database_setting
+# Kream Data Crawler
 
 ## Project Description
 
@@ -31,45 +31,167 @@ Converse---Converse x Play Comme des Garcons Chuck 70 Ox White---컨버스 x 플
 ### 3. 받아온 상세 데이터를 SQL Archemy를 통해서 DB에 저장합니다.
 
 ``` python
-# 상품 테이블
-class Product(Base):
-    __tablename__ = 'product'
+def insert_product_thumnail(brand, name_eng, name_kor, imgs) :
 
-    id = Column(BigInteger, primary_key=True)
-    brand = Column(String(255), nullable=False)
-    name = Column(String(255), nullable=False)
+    with SqlAlchemyContextManager() as session:
 
-# 썸네일 테이블
-class Thumbnail(Base):
-    __tablename__ = 'thumbnail'
+        product = Product()
+        product.brand = brand
+        product.name_eng = name_eng
+        product.name_kor = name_kor
+        session.add(product)
+        
+        for img in imgs:
+            if img == " ": # 만약 썸네일 이미지를 가져오지 못했으면 저장하지 않습니다.
+                continue
+            thumbnail = Thumbnail()
+            thumbnail.url = img
+            thumbnail.product = product
+            session.add(thumbnail)
 
-    id = Column(BigInteger, primary_key=True)
-    url = Column(String(255), nullable=False)
-    product_id = Column(ForeignKey('product.id'), index=True)
-
-    product = relationship('Product')
+        session.commit()
 ```
-### 4. 저장한 상품데이터를 기반으로 Price Dummy Data를 적재합니다.
-가격대 선정은 기본 금액 범위(100000 ~ 300000) * 가중치(1~9)이며 가중치는 랜덤입니다.
-판매자는 admin 계정이며 신발 사이즈는 230 ~ 290까지 랜덤으로 부과됩니다.
-상품 판매 개수 상품당 100 ~ 200 사이로 정해집니다.
 
+### 4. User Dummy Data를 적재합니다.
+ID 값은 8개의 숫자&문자열 무작위 조합이며 password는 Bcrypt로 암호화 했습니다.
+```python
+def make_dummy_user():
+
+    user = User()
+    user.id = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(8))
+    user.password = bcrypt.hashpw("password".encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    user.nickname = make_random_user_name()
+
+    return user
+```
+
+name 값은 3글자 이며, 아래의 리스트에서 각각 한 개씩 무작위로 추출했습니다.
 
 ```python
-# Price 테이블
-class Price(Base):
-    __tablename__ = 'price'
+def make_random_user_name():
+    
+    first_name_samples = "김이박최정강조윤장임"
+    middle_name_samples = "민서예지도하주윤채현지"
+    last_name_samples = "준윤우원호후서연아은진"
 
-    id = Column(BigInteger, primary_key=True)
-    price = Column(Integer, nullable=False)
-    size = Column(Integer, nullable=False)
-    product_id = Column(ForeignKey('product.id'), index=True)
-    seller_id = Column(ForeignKey('user.id'), index=True)
-
-    product = relationship('Product')
-    seller = relationship('User')
+    name = ""
+    name += random.choice(first_name_samples)
+    name += random.choice(middle_name_samples)
+    name += random.choice(last_name_samples)
+    
+    return name
 ```
 
+위에서 만들어진 User 더미데이터를 저장합니다.
+
+```python
+def insert_user_database(userList) :
+
+    with SqlAlchemyContextManager() as session:
+
+        print("===== Insert Dummy Users ===== ")
+        for user in tqdm(userList):
+            session.add(user)
+
+        session.commit()
+```
+
+### 5. 저장한 상품데이터를 기반으로 Price Dummy Data를 적재합니다.
+
+데이터베이스에 유저 정보를 랜덤으로 가져옵니다.
+그리고 모든 상품을 탐색하면서 각 상품별로
+
+1. 판매 개수는 100 ~ 200개
+2. 사이즈는 230 ~ 290
+3. 금액 산정은 금액 가중치 100000 ~ 1000000 이고 가중치 * 1 ~ 가중치 * 5 범위 중 무작위 입니다.
+
+```python
+
+# 무작위 유저 가져오는 함수
+def get_random_user(session):
+    rand_user = random.randrange(0, session.query(User).count())
+    user = session.query(User)[rand_user]
+    return user
+
+
+def insert_price_database():
+
+    with SqlAlchemyContextManager() as session:
+
+        products = session.query(Product).all()
+
+        for product in tqdm(products):
+            
+            # 상품당 개수 100 ~ 200개
+            price_count = random.randint(100, 200)
+
+            sizes = [230,235,240,245,250,255,260,265,270,275,280,285,290]
+            
+            # 기본 금액 단위 선정
+            weight = random.randint(100000, 1000000)
+
+            for i in  range(price_count):
+                
+                # 유저 무작위 선택
+                seller = get_random_user(session)
+                
+                # 사이즈 무작위 선택
+                size = random.choice(sizes)
+                
+                # 가격대 선정은 기본 범위(100000 ~ 1000000)이며 (기본 금액 * 1 ~ 기본 금액 * 5)까지, 단위는 10000원입니다.
+                _price = random.randrange(1 * weight, 5 * weight, 10000) 
+
+                price = Price()
+
+                price.price = _price
+                price.product = product
+                price.seller = seller
+                price.size = size
+
+                session.add(price)
+
+            session.commit()
+```
+
+
+### 6. 저장한 상품데이터를 기반으로 Order Dummy Data를 적재합니다.
+
+데이터베이스에 유저 정보를 랜덤으로 가져옵니다.
+그리고 모든 판매 요청 데이터를 탐색하면서 매핑합니다.
+이때 모든 판매 요청이 구매가 되지 않기 때문에 1/10 확률로 매핑이 되지 않습니다.
+(각 판매 요청 데이터 당 1 ~ 10까지 랜덤 숫자를 부여하고 숫자가 5인 경우 생략했습니다.)
+
+```python
+def get_ramdom_date():
+    today = date.today()
+    rand_date = random.randint(-7, 7)
+    date_diff = timedelta(days=rand_date)
+    return today - date_diff
+
+
+def insert_order_database() :
+
+    with SqlAlchemyContextManager() as session:
+
+        prices = session.query(Price).all()
+
+        for price in tqdm(prices):
+            # 각 판매 요청별로 번호를 매깁니다.
+            rand = random.randint(1, 10)
+            
+            # 번호가 5가 아닌 경우에만 매핑을 진행합니다(1/10 확률)
+            if rand != 5:
+                buyer = insert_price_database.get_random_user(session)
+                date = get_ramdom_date()
+
+                order = Order()
+                order.buyer = buyer
+                order.price = price
+                order.date = date
+                session.add(order)
+
+            session.commit()
+```
 ---
 ## Folder Structure
 
@@ -77,11 +199,11 @@ class Price(Base):
 .
 ├── README.md
 │
-├── app.py
+├── app.py # 메인 실행 파일
 │
 ├── model
 │   │
-│   └── models.py
+│   └── models.py # Sql Alchemy Model 데이터가 들어있는 파일
 |
 ├── project_setting.py
 │
@@ -97,9 +219,13 @@ class Price(Base):
 |   |
 │   ├── get_products_url_data.py # Step 1. 상품 상세 페이지 url을 가져오는 코드
 |   |
-│   ├── insert_price_database.py # Step 4. 데이터베이스에 상품 판매 더미 데이터를 넣는 코드
+│   ├── insert_order_database.py # Step 6. 데이터베이스에 상품 구매 더미 데이터를 넣는 코드
+|   |
+│   ├── insert_price_database.py # Step 5. 데이터베이스에 상품 판매 더미 데이터를 넣는 코드
 |   |
 │   └── insert_product_thumbnail_database.py # Step 3. 상품 및 썸네일 데이터를 넣는 코드
+|   |
+│   ├── insert_user_database.py # Step 4. 데이터베이스에 유저 더미 데이터를 넣는 코드
 |
 └── tools
     |
